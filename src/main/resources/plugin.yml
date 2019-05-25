@@ -13,7 +13,7 @@ commands:
            /plugman check <plugin|all> [-f]
            /plugman lookup <command>
            /plugman (enable|disable|restart) <plugin|all>
-           /plugman (info|usage|load|reload|unload) <plugin>
+           /plugman (info|usage|load|reload|unload|install) <plugin>
 permissions:
   plugman.admin:
     description: Allows use of all PlugMan commands.
@@ -33,6 +33,7 @@ permissions:
       plugman.disable.all: true
       plugman.restart: true
       plugman.restart.all: true
+      plugman.install: true
       plugman.load: true
       plugman.reload: true
       plugman.unload: true
@@ -76,6 +77,9 @@ permissions:
     default: op
   plugman.restart.all:
     description: Allows use of the restart all command.
+    default: op
+  plugman.install:
+    description: Allows use of the install command.
     default: op
   plugman.load:
     description: Allows use of the load command.
