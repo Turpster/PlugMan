@@ -78,6 +78,9 @@ public class PlugManCommandHandler implements CommandExecutor {
             case "restart":
                 cmd = new RestartCommand(sender);
                 break;
+            case "install":
+                cmd = new InstallCommand(sender);
+                break;
             case "load":
                 cmd = new LoadCommand(sender);
                 break;
