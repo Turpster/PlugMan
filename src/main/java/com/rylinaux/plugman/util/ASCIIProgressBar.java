@@ -93,7 +93,8 @@ public class ASCIIProgressBar
 
         progressBar.append(START_BORDER);
 
-        for (int i = 0; i < Math.floor(charWidth * percentage); i++)
+        short charWidthClone = charWidth;
+        for (int i = 0; i < charWidthClone * percentage; i++)
         {
             progressBar.append(DOWNLOADED);
             charWidth--;
