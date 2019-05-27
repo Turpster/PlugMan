@@ -30,12 +30,8 @@ import com.rylinaux.plugman.PlugMan;
 import com.rylinaux.plugman.util.ASCIIProgressBar;
 import com.rylinaux.plugman.util.HttpDownload;
 import com.rylinaux.plugman.util.SpiGetUtil;
-import com.rylinaux.plugman.util.ThreadUtil;
-import jdk.jfr.Percentage;
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -110,24 +106,16 @@ public class InstallCommand extends AbstractCommand {
             return;
         }
 
-        BukkitTask bukkitTask = ThreadUtil.async(new Runnable() {
+        new BukkitRunnable() {
             @Override
             public void run() {
                 final HttpDownload download = new HttpDownload(SpiGetUtil.API_BASE_URL + "resources/" + id + "/download", "plugins");
 
-                try {
-                    download.download();
-                } catch (IOException e) {
-                    sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("install.error-installing", args[1]));
-                    e.printStackTrace();
-                }
-
                 final BukkitTask progressBarTask = new BukkitRunnable() {
-
-                    final ASCIIProgressBar progressBar = new ASCIIProgressBar();
 
                     @Override
                     public void run() {
+                        ASCIIProgressBar progressBar = new ASCIIProgressBar();
 
                         float currentPercentage = download.getPercentage();
 
@@ -135,16 +123,23 @@ public class InstallCommand extends AbstractCommand {
 
                         // TODO Check if sender disconnected through the middle of the download.
 
-                        sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("install.installing.downloading", currentPercentage * 100 + "%", args[1]));
+                        sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("install.installing.downloading", (((float) Math.round(currentPercentage * 10000)) / 100) + "%", args[1]));
                         sender.sendMessage(progressBar.getProgressBar((short) 54));
                         if (currentPercentage >= 1.0) {
-                            sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("install.installing.downloaded", currentPercentage * 100 + "%", args[1]));
+                            sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("install.installing.downloaded", (((float) Math.round(currentPercentage * 10000)) / 100) + "%", args[1]));
 
                             this.cancel();
                         }
                     }
-                }.runTaskTimerAsynchronously(PlugMan.getInstance(), 0, 4);
+                }.runTaskTimerAsynchronously(PlugMan.getInstance(), 0, 20);
+
+                try {
+                    download.download();
+                } catch (IOException e) {
+                    sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("install.error-installing", args[1]));
+                    e.printStackTrace();
+                }
             }
-        });
+        }.runTaskAsynchronously(PlugMan.getInstance());
     }
 }
