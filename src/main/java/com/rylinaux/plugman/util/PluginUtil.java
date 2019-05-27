@@ -12,10 +12,10 @@ package com.rylinaux.plugman.util;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URLClassLoader;
+import java.nio.file.NotDirectoryException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,6 +45,8 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.*;
+
+import javax.naming.directory.InvalidSearchFilterException;
 
 /**
  * Utilities for managing plugins.
@@ -312,9 +315,9 @@ public class PluginUtil {
      * Loads and enables a plugin.
      *
      * @param plugin plugin to load
-     * @return status message
+     * @return the enabled plugin
      */
-    private static String load(Plugin plugin) {
+    private static Plugin load(Plugin plugin) throws InvalidSearchFilterException, InvalidDescriptionException, InvalidPluginException, IOException {
         return load(plugin.getName());
     }
 
@@ -322,16 +325,16 @@ public class PluginUtil {
      * Loads and enables a plugin.
      *
      * @param name plugin's name
-     * @return status message
+     * @return the enabled plugin
      */
-    public static String load(String name) {
+    public static Plugin load(String name) throws InvalidSearchFilterException, InvalidDescriptionException, InvalidPluginException, NotDirectoryException {
 
         Plugin target = null;
 
         File pluginDir = new File("plugins");
 
         if (!pluginDir.isDirectory()) {
-            return PlugMan.getInstance().getMessageFormatter().format("load.plugin-directory");
+            throw new NotDirectoryException(pluginDir.getAbsolutePath());
         }
 
         File pluginFile = new File(pluginDir, name + ".jar");
@@ -346,7 +349,7 @@ public class PluginUtil {
                             break;
                         }
                     } catch (InvalidDescriptionException e) {
-                        return PlugMan.getInstance().getMessageFormatter().format("load.cannot-find");
+                        throw new InvalidSearchFilterException("Could not plugin.");
                     }
                 }
             }
@@ -354,19 +357,14 @@ public class PluginUtil {
 
         try {
             target = Bukkit.getPluginManager().loadPlugin(pluginFile);
-        } catch (InvalidDescriptionException e) {
-            e.printStackTrace();
-            return PlugMan.getInstance().getMessageFormatter().format("load.invalid-description");
-        } catch (InvalidPluginException e) {
-            e.printStackTrace();
-            return PlugMan.getInstance().getMessageFormatter().format("load.invalid-plugin");
+        } catch (InvalidDescriptionException | InvalidPluginException e) {
+            throw e;
         }
 
         target.onLoad();
         Bukkit.getPluginManager().enablePlugin(target);
 
-        return PlugMan.getInstance().getMessageFormatter().format("load.loaded", target.getName());
-
+        return target;
     }
 
     /**
@@ -377,7 +375,11 @@ public class PluginUtil {
     public static void reload(Plugin plugin) {
         if (plugin != null) {
             unload(plugin);
-            load(plugin);
+            try {
+                load(plugin);
+            } catch (InvalidSearchFilterException | InvalidPluginException | InvalidDescriptionException | IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

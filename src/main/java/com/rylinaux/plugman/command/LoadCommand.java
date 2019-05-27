@@ -32,7 +32,13 @@ import com.rylinaux.plugman.util.StringUtil;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.InvalidDescriptionException;
+import org.bukkit.plugin.InvalidPluginException;
 import org.bukkit.plugin.Plugin;
+
+import javax.naming.directory.InvalidSearchFilterException;
+import java.io.IOException;
+import java.nio.file.NotDirectoryException;
 
 /**
  * Command that loads plugin(s).
@@ -111,7 +117,19 @@ public class LoadCommand extends AbstractCommand {
             return;
         }
 
-        sender.sendMessage(PluginUtil.load(name));
+        Plugin targetPlugin;
+
+        try {
+            targetPlugin = PluginUtil.load(name);
+        } catch (InvalidSearchFilterException e) {
+            sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("load.cannot-find"));
+        } catch (InvalidDescriptionException e) {
+            sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("load.invalid-description"));
+        } catch (InvalidPluginException e) {
+            sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("load.invalid-plugin"));
+        } catch (NotDirectoryException e) {
+            sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("load.plugin-dir"));
+        }
 
     }
 }
