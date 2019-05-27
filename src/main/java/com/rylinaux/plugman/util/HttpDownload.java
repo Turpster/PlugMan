@@ -28,13 +28,10 @@ package com.rylinaux.plugman.util;
 
 
 import jdk.internal.jline.internal.Nullable;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.LaxRedirectStrategy;
 
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.FileAlreadyExistsException;
 
 /**
@@ -57,7 +54,7 @@ public class HttpDownload
     /**
      * The total bytes that have been downloaded.
      */
-    private long downloadedBytes = 0;
+    private volatile long downloadedBytes = 0;
 
     /**
      * The directory where the file will be placed.
@@ -128,8 +125,8 @@ public class HttpDownload
      */
     public float getPercentage()
     {
-        if (this.getTotalBytes() != 0)
-            return this.getDownloadedBytes() / this.getTotalBytes();
+        if (this.getTotalBytes() != 0f)
+            return (float) this.getDownloadedBytes() / this.getTotalBytes();
         return 0;
     }
 
@@ -163,17 +160,37 @@ public class HttpDownload
      */
     public File download() throws FileAlreadyExistsException, IOException
     {
-        // LaxRedirectStrategy allows the client to redirect to the download.
-        HttpClient client = HttpClientBuilder.create().setRedirectStrategy(new LaxRedirectStrategy()).build();
+        URL url = new URL(this.getDownloadURL());
 
-        HttpGet getDownload = new HttpGet(downloadURL);
-        getDownload.setHeader("User-Agent", "PlugMan");
-        HttpResponse response = client.execute(getDownload);
-        totalBytes = Long.parseLong(response.getHeaders("content-length")[0].getValue());
-        if (fileName == null)
-        {
-            // Get default filename from the Content-Disposition header.
-            fileName = response.getHeaders("Content-Disposition")[0].getValue().replaceFirst("(?i)^.*filename=\"?([^\"]+)\"?.*$", "$1");;
+        // Loop to set the redirect URL if the response is HTTP_MOVED.
+        while (true) {
+            HttpURLConnection httpURLConnection = null;
+            try {
+                httpURLConnection = (HttpURLConnection) url.openConnection();
+                httpURLConnection.setRequestMethod("HEAD");
+
+                switch (httpURLConnection.getResponseCode())
+                {
+                    case HttpURLConnection.HTTP_MOVED_PERM:
+                    case HttpURLConnection.HTTP_MOVED_TEMP:
+                        url = new URL(httpURLConnection.getHeaderField("Location"));
+                        continue;
+                    default:
+                }
+
+                totalBytes = httpURLConnection.getContentLengthLong();
+                System.out.println(totalBytes);
+                if (fileName == null) {
+
+                    System.out.println(httpURLConnection.getHeaderFields().toString());
+                    fileName = httpURLConnection.getHeaderField("Content-Disposition").replaceFirst("(?i)^.*filename=\"?([^\"]+)\"?.*$", "$1");
+                }
+            } finally {
+                if (httpURLConnection != null) {
+                    httpURLConnection.disconnect();
+                }
+            }
+            break;
         }
 
         File file = new File(folderLocation + "/" + fileName);
@@ -183,7 +200,7 @@ public class HttpDownload
             throw new FileAlreadyExistsException(file.getAbsolutePath());
         }
 
-        BufferedInputStream downloadStream = new BufferedInputStream(response.getEntity().getContent());
+        BufferedInputStream downloadStream = new BufferedInputStream(url.openStream());
         BufferedOutputStream pluginFileStream = new BufferedOutputStream(new FileOutputStream(file));
 
         int inByte;
