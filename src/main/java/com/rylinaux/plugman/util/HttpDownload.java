@@ -128,7 +128,9 @@ public class HttpDownload
      */
     public float getPercentage()
     {
-        return this.getDownloadedBytes() / this.getTotalBytes();
+        if (this.getTotalBytes() != 0)
+            return this.getDownloadedBytes() / this.getTotalBytes();
+        return 0;
     }
 
     /**
