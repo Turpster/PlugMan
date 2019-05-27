@@ -35,7 +35,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.LaxRedirectStrategy;
 
 import java.io.*;
-import java.net.URI;
 import java.nio.file.FileAlreadyExistsException;
 
 /**
@@ -63,7 +62,7 @@ public class HttpDownload
     /**
      * The directory where the file will be placed.
      */
-    private URI folderLocation = null;
+    private String folderLocation = null;
 
     /**
      * The name of the file.
@@ -121,6 +120,17 @@ public class HttpDownload
         return folderLocation.toString();
     }
 
+
+    /**
+     * Get the percentage of the completed download.
+     *
+     * @return percentage of the completed download.
+     */
+    public float getPercentage()
+    {
+        return this.getDownloadedBytes() / this.getTotalBytes();
+    }
+
     /**
      * Construct out object.
      *
@@ -128,12 +138,19 @@ public class HttpDownload
      * @param folderLocation The download folder.
      * @param fileName The name of the file; null if default download name.
      */
-    public HttpDownload(String downloadURL, URI folderLocation, @Nullable String fileName)
+    public HttpDownload(String downloadURL, String folderLocation, @Nullable String fileName)
     {
         this.downloadURL = downloadURL;
         this.folderLocation = folderLocation;
         this.fileName = fileName;
     }
+
+    public HttpDownload(String downloadURL, String folderLocation)
+    {
+        this.downloadURL = downloadURL;
+        this.folderLocation = folderLocation;
+    }
+
 
     /**
      * Download the file.
@@ -170,7 +187,7 @@ public class HttpDownload
         int inByte;
         while ((inByte = downloadStream.read()) != -1) {
             pluginFileStream.write(inByte);
-            downloadedBytes += 4;
+            downloadedBytes += 1;
         }
 
         downloadStream.close();
