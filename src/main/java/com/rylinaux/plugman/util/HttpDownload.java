@@ -171,6 +171,7 @@ public class HttpDownload
 
                 switch (httpURLConnection.getResponseCode())
                 {
+                    // TODO Add more and throw exceptions.
                     case HttpURLConnection.HTTP_MOVED_PERM:
                     case HttpURLConnection.HTTP_MOVED_TEMP:
                         url = new URL(httpURLConnection.getHeaderField("Location"));
@@ -199,6 +200,8 @@ public class HttpDownload
         {
             throw new FileAlreadyExistsException(file.getAbsolutePath());
         }
+
+        file.createNewFile();
 
         BufferedInputStream downloadStream = new BufferedInputStream(url.openStream());
         BufferedOutputStream pluginFileStream = new BufferedOutputStream(new FileOutputStream(file));

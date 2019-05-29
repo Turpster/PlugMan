@@ -26,7 +26,7 @@ PlugMan is a simple, easy to use plugin that lets server admins manage plugins f
 | /plugman enable [plugin&#124;all] | Enable a plugin. |
 | /plugman disable [plugin&#124;all] | Disable a plugin. |
 | /plugman restart [plugin&#124;all] | Restart (disable/enable) a plugin. |
-| /plugman install [plugin] | Install a plugin. |
+| /plugman install [plugin] [selection] | Install a plugin. |
 | /plugman load [plugin] | Load a plugin. |
 | /plugman reload [plugin&#124;all] | Reload (unload/load) a plugin. |
 | /plugman unload [plugin] | Unload a plugin. |

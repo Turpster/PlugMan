@@ -36,6 +36,7 @@ error:
   no-permission: '&cYou do not have permission to do this.'
   specify-plugin: '&cYou must specify a plugin.'
   specify-command: '&cYou must specify a command.'
+  number-format-exception: '&c{0} is not a number.'
   usage:
     command: '&7- &9Command: &7{0}'
     description: '&7- &9Description: &7{0}'
@@ -51,6 +52,7 @@ help:
   enable: '&7- &a/plugman enable <plugin|all> &f- &7Enable a plugin.'
   disable: '&7- &a/plugman disable <plugin|all> &f- &7Disable a plugin.'
   restart: '&7- &a/plugman restart <plugin|all> &f- &7Restart a plugin.'
+  install: '&7- &a/plugman install <plugin> [selection] &f- &Install a plugin.'
   load: '&7- &a/plugman load <plugin> &f- &7Load a plugin.'
   reload: '&7- &a/plugman reload <plugin|all> &f- &7Reload a plugin.'
   unload: '&7- &a/plugman unload <plugin> &f- &7Unload a plugin.'
@@ -81,10 +83,14 @@ restart:
   all: '&9All plugins have been restarted.'
   restarted: '&9{0} has been restarted.'
 install:
+  plugin-failed: '&9The plugin failed to be loaded or enabled. Please check console.'
   error-installing: '&9There was an error installing {0}.'
   installing:
     downloading: '&9[{0}] Downloading... | {1}'
     downloaded: '&9[{0}] Downloaded. | {1}'
+  zip-file:
+    select-jar: '&9Please append your command with the jarfiles you would like to install from {0}, For example {1} 1,2,3...'
+    jar-file-exists: '&9The jarfile {0} already exists inside the plugins file.'
 unload:
   failed: '&cFailed to unload {0}.'
   unloaded: '&9{0} has been unloaded.'
