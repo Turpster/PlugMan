@@ -195,7 +195,7 @@ public class HttpDownload
 
         File file = new File(folderLocation + "/" + fileName);
 
-        if (file.exists())
+        if (file.isFile())
         {
             throw new FileAlreadyExistsException(file.getAbsolutePath());
         }
