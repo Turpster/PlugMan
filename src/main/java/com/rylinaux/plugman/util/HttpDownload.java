@@ -27,7 +27,7 @@ package com.rylinaux.plugman.util;
  */
 
 
-import jdk.internal.jline.internal.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.HttpURLConnection;

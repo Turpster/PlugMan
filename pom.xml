@@ -71,6 +71,11 @@
             <artifactId>httpclient</artifactId>
             <version>4.3.6</version>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>17.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>
