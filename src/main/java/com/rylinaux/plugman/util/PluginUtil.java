@@ -38,6 +38,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.rylinaux.plugman.PlugMan;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -341,7 +342,7 @@ public class PluginUtil {
 
         if (!pluginFile.isFile()) {
             for (File f : pluginDir.listFiles()) {
-                if (f.getName().endsWith(".jar")) {
+                if (StringUtils.endsWithIgnoreCase(f.getName(), ".jar")) {
                     try {
                         PluginDescriptionFile desc = PlugMan.getInstance().getPluginLoader().getPluginDescription(f);
                         if (desc.getName().equalsIgnoreCase(name)) {
