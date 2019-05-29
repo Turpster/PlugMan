@@ -48,15 +48,5 @@ public class StringUtil {
         }
         return ret;
     }
-    /**
-     * tests if this string ends with the specified suffix ignoring case.
-     *
-     * @param str target strings
-     * @param endsWith what the string should end with
-     * @return whether the string ends with what's specified
-     */
-    public static boolean endsWithIgnoreCase(String str, String endsWith)
-    {
-        return str.substring(str.length() - endsWith.length()).toLowerCase().equalsIgnoreCase(endsWith);
-    }
+
 }

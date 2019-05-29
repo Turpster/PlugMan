@@ -341,7 +341,7 @@ public class PluginUtil {
 
         if (!pluginFile.isFile()) {
             for (File f : pluginDir.listFiles()) {
-                if (StringUtil.endsWithIgnoreCase(f.getName(), ".jar")) {
+                if (f.getName().endsWith(".jar")) {
                     try {
                         PluginDescriptionFile desc = PlugMan.getInstance().getPluginLoader().getPluginDescription(f);
                         if (desc.getName().equalsIgnoreCase(name)) {
