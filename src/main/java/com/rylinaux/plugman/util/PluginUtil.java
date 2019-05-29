@@ -338,8 +338,10 @@ public class PluginUtil {
             throw new NotDirectoryException(pluginDir.getAbsolutePath());
         }
 
-        File pluginFile = new File(pluginDir, name + ".jar");
+        File pluginFile = new File(pluginDir, name);
 
+        if (!pluginFile.isFile())
+            pluginFile = new File(pluginDir, name + ".jar");
         if (!pluginFile.isFile()) {
             for (File f : pluginDir.listFiles()) {
                 if (StringUtils.endsWithIgnoreCase(f.getName(), ".jar")) {
