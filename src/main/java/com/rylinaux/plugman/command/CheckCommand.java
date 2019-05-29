@@ -41,7 +41,7 @@ import java.util.Map;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 /**
  * Command that checks if a plugin is up-to-date.
@@ -114,7 +114,7 @@ public class CheckCommand extends AbstractCommand {
 
                 sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("check.header"));
 
-                ThreadUtil.async(new Runnable() {
+                ThreadUtil.async(new BukkitRunnable() {
 
                     @Override
                     public void run() {
@@ -170,7 +170,7 @@ public class CheckCommand extends AbstractCommand {
 
                         } else {
 
-                            ThreadUtil.sync(new Runnable() {
+                            ThreadUtil.sync(new BukkitRunnable() {
                                 @Override
                                 public void run() {
                                     sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("check.up-to-date-player", upToDate.toString()));
@@ -198,14 +198,14 @@ public class CheckCommand extends AbstractCommand {
 
         sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("check.header"));
 
-        ThreadUtil.async(new Runnable() {
+        ThreadUtil.async(new BukkitRunnable() {
 
             @Override
             public void run() {
 
                 final UpdateResult result = SpiGetUtil.checkUpToDate(pluginName);
 
-                ThreadUtil.sync(new Runnable() {
+                ThreadUtil.sync(new BukkitRunnable() {
 
                     @Override
                     public void run() {

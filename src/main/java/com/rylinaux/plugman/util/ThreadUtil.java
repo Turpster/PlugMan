@@ -28,7 +28,7 @@ package com.rylinaux.plugman.util;
 
 import com.rylinaux.plugman.PlugMan;
 
-import org.bukkit.Bukkit;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 /**
@@ -44,8 +44,8 @@ public class ThreadUtil {
      * @param runnable the task.
      * @return bukkittask associated with the runnable.
      */
-    public static BukkitTask async(Runnable runnable) {
-        return Bukkit.getScheduler().runTaskAsynchronously(PlugMan.getInstance(), runnable);
+    public static BukkitTask async(BukkitRunnable runnable) {
+        return runnable.runTaskAsynchronously(PlugMan.getInstance());
     }
 
     /**
@@ -54,8 +54,7 @@ public class ThreadUtil {
      * @param runnable the task.
      * @return bukkittask associated with the runnable.
      */
-    public static BukkitTask sync(Runnable runnable) {
-        return Bukkit.getScheduler().runTask(PlugMan.getInstance(), runnable);
+    public static BukkitTask sync(BukkitRunnable runnable) {
+        return runnable.runTask(PlugMan.getInstance());
     }
-
 }
