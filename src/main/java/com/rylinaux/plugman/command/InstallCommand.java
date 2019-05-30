@@ -149,130 +149,118 @@ public class InstallCommand extends AbstractCommand {
 //                    }
 //                }.runTaskTimerAsynchronously(PlugMan.getInstance(), 0, 20);
 
-                File cacheDownloadFile = null;
+                File cacheFile = null;
 
                 try {
-                    cacheDownloadFile = pluginDownload.download();
+                    cacheFile = pluginDownload.download();
                 } catch (FileAlreadyExistsException e) {
-                    cacheDownloadFile = new File(pluginDownload.getTargetLocation());
+                    cacheFile = new File(pluginDownload.getTargetLocation());
                 } catch (IOException e) {
                     sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("install.error-installing", args[1]));
                     e.printStackTrace();
                 }
 
-                ArrayList<File> plugins = new ArrayList<>();
+                ArrayList<File> loadPlugins = new ArrayList<>();
 
-                if (StringUtils.endsWithIgnoreCase(cacheDownloadFile.getName(), ".zip")) {
+                FileUtil.FileType cacheFileType = FileUtil.getFileType(cacheFile.getName());
+
+                if (cacheFileType == FileUtil.FileType.ZIP_FILE) {
                     ZipFile zipFile = null;
+
                     try {
-                        zipFile = new ZipFile(cacheDownloadFile);
+                        zipFile = new ZipFile(cacheFile);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
 
+                    ArrayList<ZipEntry> zipJarEntries = new ArrayList<>();
+
                     Enumeration<? extends ZipEntry> entries = zipFile.entries();
-
-                    System.out.println(entries);
-
-                    ArrayList<ZipEntry> fileNumberBindings = new ArrayList<>();
-
                     while(entries.hasMoreElements()) {
                         ZipEntry entry = entries.nextElement();
 
                         if (StringUtils.endsWithIgnoreCase(entry.getName(), ".jar")) {
-                            fileNumberBindings.add(entry);
+                            zipJarEntries.add(entry);
                         }
                     }
 
                     if (args.length >= 3) {
-                        ArrayList<Integer> selections = new ArrayList<>();
 
-                        for (String number : args[2].split(",")) {
-                            try {
-                                selections.add(Integer.parseInt(number));
-                            } catch (NumberFormatException e) {
-                                sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("error.number-format-exception", number));
-                                return;
-                            }
+                        String[] fileSelectionsStr = args[2].split(",");
+                        int[] fileSelections = new int[fileSelectionsStr.length];
+
+                        for (int i = 0; i < fileSelections.length; i++)
+                        {
+                            fileSelections[i] = Integer.parseInt(fileSelectionsStr[i]);
                         }
 
-                        for (int selection : selections) {
-                            String zipFilePath = fileNumberBindings.get(selection).getName();
+                        for (int selection : fileSelections) {
+                            String zipFilePath = zipJarEntries.get(selection).getName();
 
-                            File targetLocation = new File("plugins/" + zipFilePath.substring(zipFilePath.lastIndexOf("/")));
+                            File plugin = new File("plugins/" + zipFilePath.substring(zipFilePath.lastIndexOf("/")));
 
-                            System.out.println(zipFilePath);
-
-                            if (targetLocation.isFile()) {
-                                sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("error.jar-file-exists", targetLocation.getName()));
+                            if (plugin.isFile()) {
+                                sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("error.jar-file-exists", plugin.getName()));
                                 return;
                             }
 
-                            BufferedInputStream inputStream = null;
-                            try {
-                                inputStream = new BufferedInputStream(zipFile.getInputStream(fileNumberBindings.get(selection)));
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            BufferedInputStream zipJarInputStream = null;
+                            BufferedOutputStream pluginOutputStream = null;
 
                             try {
-                                targetLocation.createNewFile();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                                zipJarInputStream = new BufferedInputStream(zipFile.getInputStream(zipJarEntries.get(selection)));
 
-                            BufferedOutputStream bufferedOutputStream = null;
-                            try {
-                                bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(targetLocation));
-                            } catch (FileNotFoundException e) {
+                                plugin.createNewFile();
+                                pluginOutputStream = new BufferedOutputStream(new FileOutputStream(plugin));
+                            } catch (IOException e) {
                                 e.printStackTrace();
                             }
 
                             int inByte;
                             try {
-                                while ((inByte = inputStream.read()) != -1) {
-                                    bufferedOutputStream.write(inByte);
+                                while ((inByte = zipJarInputStream.read()) != -1) {
+                                    pluginOutputStream.write(inByte);
                                 }
 
-                                inputStream.close();
-                                bufferedOutputStream.close();
+                                zipJarInputStream.close();
+                                pluginOutputStream.close();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
 
-                            plugins.add(targetLocation);
+                            loadPlugins.add(plugin);
                         }
                     }
                     else {
-                        sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("install.zip-file.select-jar", cacheDownloadFile.getName(), label + StringUtil.consolidateStrings(args, 0)));
+                        sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("install.zip-file.select-jar", cacheFile.getName(), label + StringUtil.consolidateStrings(args, 0)));
 
-                        StringBuilder numberBindings = new StringBuilder();
+                        StringBuilder jarFileSelection = new StringBuilder();
 
-                        for (int i = 0; i < fileNumberBindings.size(); i++) {
-                            numberBindings.append("(").append(i).append(") ").append(fileNumberBindings.get(i).getName()).append(" ");
+                        for (int i = 0; i < zipJarEntries.size(); i++) {
+                            jarFileSelection.append("(").append(i).append(") ").append(zipJarEntries.get(i).getName()).append("\n");
                         }
 
-                        sender.sendMessage(numberBindings.toString());
+                        sender.sendMessage(jarFileSelection.toString());
                     }
                     try {
                         zipFile.close();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                } else if (StringUtils.endsWithIgnoreCase(cacheDownloadFile.getAbsolutePath(), ".jar")) {
+                } else if (cacheFileType == FileUtil.FileType.JAR_FILE) {
                     try
                     {
-                        FileUtils.copyFileToDirectory(cacheDownloadFile, new File("plugins"));
+                        FileUtils.copyFileToDirectory(cacheFile, new File("plugins"));
                     }
                     catch (IOException e)
                     {
                         e.printStackTrace();
                     }
 
-                    plugins.add(new File("plugins/" + cacheDownloadFile.getName()));
+                    loadPlugins.add(new File("plugins/" + cacheFile.getName()));
                 }
 
-                for (File file : plugins)
+                for (File file : loadPlugins)
                 {
                     try {
                         PluginUtil.load(file.getName());
