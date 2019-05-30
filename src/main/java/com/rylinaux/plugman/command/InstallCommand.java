@@ -263,7 +263,8 @@ public class InstallCommand extends AbstractCommand {
                 for (File file : loadPlugins)
                 {
                     try {
-                        PluginUtil.load(file.getName());
+                        PluginUtil.enable(PluginUtil.load(file.getName()));
+
                     } catch (InvalidSearchFilterException | InvalidDescriptionException | InvalidPluginException | NotDirectoryException e) {
                         sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("install.plugin-failed"));
                         e.printStackTrace();
