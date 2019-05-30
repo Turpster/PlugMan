@@ -121,6 +121,7 @@ public class LoadCommand extends AbstractCommand {
 
         try {
             targetPlugin = PluginUtil.load(name);
+            PluginUtil.enable(targetPlugin);
         } catch (InvalidSearchFilterException e) {
             sender.sendMessage(PlugMan.getInstance().getMessageFormatter().format("load.cannot-find"));
         } catch (InvalidDescriptionException e) {

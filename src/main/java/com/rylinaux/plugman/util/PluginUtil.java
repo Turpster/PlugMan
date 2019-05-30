@@ -365,7 +365,6 @@ public class PluginUtil {
         }
 
         target.onLoad();
-        Bukkit.getPluginManager().enablePlugin(target);
 
         return target;
     }
