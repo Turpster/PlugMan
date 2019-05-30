@@ -29,6 +29,7 @@ package com.rylinaux.plugman.util;
 import com.google.common.base.Joiner;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URLClassLoader;
@@ -46,6 +47,7 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.*;
+import org.jetbrains.annotations.Nullable;
 
 import javax.naming.directory.InvalidSearchFilterException;
 
@@ -57,6 +59,11 @@ import javax.naming.directory.InvalidSearchFilterException;
 public class PluginUtil {
 
     /**
+     * Plugin Directory.
+     */
+    public static File pluginDir = new File("plugins");
+
+    /**
      * Enable a plugin.
      *
      * @param plugin the plugin to enable
@@ -65,6 +72,63 @@ public class PluginUtil {
         if (plugin != null && !plugin.isEnabled()) {
             Bukkit.getPluginManager().enablePlugin(plugin);
         }
+    }
+
+    /**
+     * Enable plugin(s) in dependency order.
+     *
+     * @param plugins the plugin(s) to enable
+     */
+    public static void enable(List<Plugin> plugins) {
+
+        TreeMap<String, Integer> pluginWant = new TreeMap<>();
+
+        for (List<String> pluginDependencyList : getHardPluginDependencies(plugins).values())
+        {
+            for (String dependency : pluginDependencyList)
+            {
+                if (pluginWant.containsKey(pluginDependencyList))
+                {
+                    pluginWant.put(dependency, pluginWant.get(pluginDependencyList) + 1);
+                }
+                else {
+                    pluginWant.put(dependency, 1);
+                }
+            }
+        }
+
+        Set<String> pluginEnableOrder = pluginWant.descendingMap().keySet();
+
+        for (String pluginName : pluginEnableOrder)
+        {
+            for (Plugin plugin : plugins)
+            {
+                if (plugin.getDescription().getName().equalsIgnoreCase(pluginName))
+                {
+                    if (!plugin.isEnabled())
+                    {
+                        enable(plugin);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Get hard plugin dependencies.
+     *
+     * @param plugins a list of plugins.
+     * @return Plugin's that match it's list of dependencies.
+     */
+    public static HashMap<Plugin, List<String>> getHardPluginDependencies(List<Plugin> plugins)
+    {
+        HashMap<Plugin, List<String>> depends = new HashMap<>();
+
+        for (Plugin plugin : plugins) {
+            depends.put(plugin, plugin.getDescription().getDepend());
+        }
+
+        return depends;
     }
 
     /**
@@ -330,14 +394,6 @@ public class PluginUtil {
      */
     public static Plugin load(String name) throws InvalidSearchFilterException, InvalidDescriptionException, InvalidPluginException, NotDirectoryException {
 
-        Plugin target = null;
-
-        File pluginDir = new File("plugins");
-
-        if (!pluginDir.isDirectory()) {
-            throw new NotDirectoryException(pluginDir.getAbsolutePath());
-        }
-
         File pluginFile = new File(pluginDir, name);
 
         if (!pluginFile.isFile())
@@ -358,6 +414,105 @@ public class PluginUtil {
             }
         }
 
+        return load(pluginFile);
+    }
+
+    /**
+     * Use find techniques to get plugin file.
+     *
+     * @param name the name of the file
+     * @return the plugin
+     * @throws InvalidDescriptionException should the target plugin have an invalid description.
+     */
+    @Nullable
+    public static File findPluginFile(String name) throws InvalidDescriptionException
+    {
+        File plugin = null;
+        plugin = getPluginFile(name);
+        if (plugin == null) {
+            plugin = findPluginFile(name);
+        }
+
+        return plugin;
+    }
+
+    /**
+     * Get a plugin file via a linear search
+     *
+     * @param name the plugin file's name.
+     * @return the plugin file.
+     */
+    @Nullable
+    public static File getPluginFile(String name)
+    {
+        String targetLocation = pluginDir.getAbsolutePath() + '/' + name;
+
+        File targetFile = new File(targetLocation);
+
+        if (!targetFile.isFile()) {
+            targetFile = new File(targetLocation + ".jar");
+        }
+
+        if (targetFile.isFile()) {
+            return targetFile;
+        }
+
+        else {
+            return null;
+        }
+    }
+
+    /**
+     * Get a plugin file via a linear search of plugin description files.
+     *
+     * @param name the name of the plugin
+     * @return the plugin file.
+     * @throws InvalidDescriptionException should the target plugin have an invalid description.
+     */
+    @Nullable
+    public static File searchPluginFile(String name) throws InvalidDescriptionException
+    {
+        String targetLocation = pluginDir.getAbsolutePath() + '/' + name;
+
+        File targetFile = new File(targetLocation);
+
+        if (!targetFile.isFile()) {
+            for (File file : getPluginFiles()) {
+                PluginDescriptionFile desc = PlugMan.getInstance().getPluginLoader().getPluginDescription(file);
+                if (desc.getName().equalsIgnoreCase(name)) {
+                    return file;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get all plugin file(s) that would be initialised on server start.
+     *
+     * @return list of plugins
+     */
+    public static List<File> getPluginFiles()
+    {
+        FilenameFilter filenameFilter = (file, s) -> {
+            if (StringUtils.endsWithIgnoreCase(s, ".jar")) return true;
+            return false;
+        };
+
+        return Arrays.asList(pluginDir.listFiles(filenameFilter));
+    }
+
+    /**
+     * Loads and enables a plugin.
+     *
+     * @param pluginFile plugin's file
+     * @return the enabled plugin
+     */
+    public static Plugin load(File pluginFile) throws InvalidDescriptionException, InvalidPluginException
+    {
+        Plugin target;
+
         try {
             target = Bukkit.getPluginManager().loadPlugin(pluginFile);
         } catch (InvalidDescriptionException | InvalidPluginException e) {
@@ -368,6 +523,25 @@ public class PluginUtil {
 
         return target;
     }
+
+
+    /**
+     * Loads plugin(s).
+     *
+     * @param pluginFiles plugin file(s).
+     * @return the enabled plugin
+     */
+    public static List<Plugin> load(List<File> pluginFiles) throws InvalidDescriptionException, InvalidPluginException {
+        ArrayList<Plugin> plugins = new ArrayList<>();
+
+        for (File plugin : pluginFiles)
+        {
+            plugins.add(load(plugin));
+        }
+
+        return plugins;
+    }
+
 
     /**
      * Reload a plugin.
